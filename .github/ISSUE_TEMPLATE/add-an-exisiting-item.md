@@ -9,5 +9,5 @@ assignees: ''
 
 Use this issue to discuss the [component name] component from the Government of Alberta Design System.
 
-- [View this component in the Gov AB Design System website](https://design.alberta.ca/components/button#tab-0)
-- [View a list of open issues and pull requests for this component]()
+- [View this component in the Gov AB Design System website](https://design.alberta.ca/components/button)
+- [View a list of open issues and pull requests for this component](https://github.com/GovAlta/ui-components/labels/Component%20name)
