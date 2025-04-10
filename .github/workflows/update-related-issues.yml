@@ -19,14 +19,12 @@ jobs:
             const communityRepo = "design-system-backlog";
             const teamRepo = "ui-components";
 
-            const TYPE_LABELS = ['Bug', 'Feature', 'Task'];
-
-            // Helper to extract type from labels
+            // Helper to get type
             function getTypeFromIssue(issue) {
-              if (issue?.type) {
-                return issue.type.toLowerCase();
+              if (issue?.type && typeof issue.type === 'object' && issue.type.name) {
+                return issue.type.name.toLowerCase();
               }
-              if (issue?.issue_type?.name) {
+              if (issue?.issue_type && typeof issue.issue_type === 'object' && issue.issue_type.name) {
                 return issue.issue_type.name.toLowerCase();
               }
               return 'other';
@@ -85,7 +83,7 @@ jobs:
 
               // Replace or insert the related+closed section
               let updatedBody = communityIssue.body || "";
-              const sectionRegex = /## Related issues[\s\S]*?(?=##|$)/i;
+              const sectionRegex = /### Open issues[\s\S]*?(?=##|$)/i;
 
               if (sectionRegex.test(updatedBody)) {
                 updatedBody = updatedBody.replace(sectionRegex, `${relatedSection}\n\n${closedSection}`);
