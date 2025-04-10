@@ -19,7 +19,6 @@ jobs:
             const communityRepo = "design-system-backlog";
             const teamRepo = "ui-components";
 
-            // Helper to get type
             function getTypeFromIssue(issue) {
               if (issue?.type && typeof issue.type === 'object' && issue.type.name) {
                 return issue.type.name.toLowerCase();
@@ -30,7 +29,6 @@ jobs:
               return 'other';
             }
 
-            // Get all open issues in the community backlog
             const communityIssues = await github.paginate(
               github.rest.issues.listForRepo,
               { owner, repo: communityRepo, state: "open" }
@@ -39,7 +37,6 @@ jobs:
             for (const communityIssue of communityIssues) {
               const componentName = communityIssue.title.trim();
 
-              // Get OPEN issues in team backlog
               const openIssues = await github.paginate(
                 github.rest.issues.listForRepo,
                 {
@@ -50,7 +47,6 @@ jobs:
                 }
               );
 
-              // Get CLOSED issues in team backlog
               const closedIssues = await github.paginate(
                 github.rest.issues.listForRepo,
                 {
@@ -61,7 +57,6 @@ jobs:
                 }
               );
 
-              // Format open issues list
               const openList = openIssues.length > 0
                 ? openIssues.map(issue => {
                     const type = getTypeFromIssue(issue);
@@ -69,7 +64,6 @@ jobs:
                   }).join('\n')
                 : "_No related issues found._";
 
-              // Format closed issues list
               const closedList = closedIssues.length > 0
                 ? closedIssues.map(issue => {
                     const type = getTypeFromIssue(issue);
@@ -77,13 +71,11 @@ jobs:
                   }).join('\n')
                 : "_No closed issues._";
 
-              // Wrap both in comment tags so we can safely replace them
               const relatedSection = `### Open issues\n${openList}`;
               const closedSection = `#### Closed issues\n${closedList}`;
               const combinedSection = `<!-- related-issues-start -->\n${relatedSection}\n\n${closedSection}\n<!-- related-issues-end -->`;
 
-              // One-time cleanup regex: remove any old heading blocks that resemble previous formats
-              const sectionRegex = /(<!-- related-issues-start -->[\s\S]*?<!-- related-issues-end -->|## Related issues[\s\S]*?(?=## |### |$)|### Open issues[\s\S]*?(?=## |### |$))/gi;
+              const sectionRegex = /<!-- related-issues-start -->[\s\S]*?<!-- related-issues-end -->/i;
 
               let updatedBody = communityIssue.body || "";
               if (sectionRegex.test(updatedBody)) {
@@ -92,7 +84,6 @@ jobs:
                 updatedBody += `\n\n${combinedSection}`;
               }
 
-              // Update the community issue with the new body
               await github.rest.issues.update({
                 owner,
                 repo: communityRepo,
@@ -100,5 +91,5 @@ jobs:
                 body: updatedBody
               });
 
-              console.log(`✅ Cleaned and updated: ${componentName}`);
+              console.log(`✅ Updated: ${componentName}`);
             }
