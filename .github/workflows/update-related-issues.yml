@@ -1,0 +1,100 @@
+name: Update Related Team Issues
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:      # Allows manual triggering from GitHub
+
+jobs:
+  update-related-issues:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Use GitHub script to update issues
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = "GovAlta";
+            const communityRepo = "design-system-backlog";
+            const teamRepo = "ui-components";
+
+            const TYPE_LABELS = ['Bug', 'Feature', 'Task'];
+
+            // Helper to extract type from labels
+            function getTypeFromLabels(labels) {
+              const found = labels.find(label => TYPE_LABELS.includes(label.name));
+              return found ? found.name.toLowerCase() : 'other';
+            }
+
+            // Get all open issues in the community backlog
+            const communityIssues = await github.paginate(
+              github.rest.issues.listForRepo,
+              { owner, repo: communityRepo, state: "open" }
+            );
+
+            for (const communityIssue of communityIssues) {
+              const componentName = communityIssue.title.trim();
+
+              // Get OPEN issues in team backlog
+              const openIssues = await github.paginate(
+                github.rest.issues.listForRepo,
+                {
+                  owner,
+                  repo: teamRepo,
+                  labels: componentName,
+                  state: "open"
+                }
+              );
+
+              // Get CLOSED issues in team backlog
+              const closedIssues = await github.paginate(
+                github.rest.issues.listForRepo,
+                {
+                  owner,
+                  repo: teamRepo,
+                  labels: componentName,
+                  state: "closed"
+                }
+              );
+
+              // Format open issues list
+              const openList = openIssues.length > 0
+                ? openIssues.map(issue => {
+                    const type = getTypeFromLabels(issue.labels);
+                    return `- [#${issue.number}](${issue.html_url}) (${type}) ${issue.title}`;
+                  }).join('\n')
+                : "_No related issues found._";
+
+              // Format closed issues list
+              const closedList = closedIssues.length > 0
+                ? closedIssues.map(issue => {
+                    const type = getTypeFromLabels(issue.labels);
+                    return `- [#${issue.number}](${issue.html_url}) (${type}) ${issue.title}`;
+                  }).join('\n')
+                : "_No closed issues._";
+
+              const relatedSection = `## Related issues\n${openList}`;
+              const closedSection = `### Closed issues\n${closedList}`;
+              const combinedSection = `${relatedSection}\n\n${closedSection}`;
+
+              // Replace or insert the related+closed section
+              let updatedBody = communityIssue.body || "";
+              const sectionRegex = /## Related issues[\s\S]*?(?=##|$)/i;
+
+              if (sectionRegex.test(updatedBody)) {
+                updatedBody = updatedBody.replace(sectionRegex, `${relatedSection}\n\n${closedSection}`);
+              } else {
+                updatedBody += `\n\n${combinedSection}`;
+              }
+
+              // Update the community issue with the new body
+              await github.rest.issues.update({
+                owner,
+                repo: communityRepo,
+                issue_number: communityIssue.number,
+                body: updatedBody
+              });
+
+              console.log(`✅ Updated: ${componentName}`);
+            }
