@@ -82,10 +82,10 @@ jobs:
               const closedSection = `#### Closed issues\n${closedList}`;
               const combinedSection = `<!-- related-issues-start -->\n${relatedSection}\n\n${closedSection}\n<!-- related-issues-end -->`;
 
-              // Use regex to replace the entire block
-              let updatedBody = communityIssue.body || "";
-              const sectionRegex = /<!-- related-issues-start -->[\s\S]*?<!-- related-issues-end -->/gi;
+              // One-time cleanup regex: remove any old heading blocks that resemble previous formats
+              const sectionRegex = /(<!-- related-issues-start -->[\s\S]*?<!-- related-issues-end -->|## Related issues[\s\S]*?(?=## |### |$)|### Open issues[\s\S]*?(?=## |### |$))/gi;
 
+              let updatedBody = communityIssue.body || "";
               if (sectionRegex.test(updatedBody)) {
                 updatedBody = updatedBody.replace(sectionRegex, combinedSection);
               } else {
@@ -100,5 +100,5 @@ jobs:
                 body: updatedBody
               });
 
-              console.log(`✅ Updated: ${componentName}`);
+              console.log(`✅ Cleaned and updated: ${componentName}`);
             }
