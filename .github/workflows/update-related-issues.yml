@@ -23,8 +23,11 @@ jobs:
 
             // Helper to extract type from labels
             function getTypeFromLabels(labels) {
-              const found = labels.find(label => TYPE_LABELS.includes(label.name));
-              return found ? found.name.toLowerCase() : 'other';
+              const type = labels.find(label => {
+                const name = label.name.toLowerCase();
+                return name === 'bug' || name === 'feature' || name === 'task';
+              });
+              return type ? type.name.toLowerCase() : 'other';
             }
 
             // Get all open issues in the community backlog
@@ -74,8 +77,8 @@ jobs:
                   }).join('\n')
                 : "_No closed issues._";
 
-              const relatedSection = `## Related issues\n${openList}`;
-              const closedSection = `### Closed issues\n${closedList}`;
+              const relatedSection = `### Open issues\n${openList}`;
+              const closedSection = `#### Closed issues\n${closedList}`;
               const combinedSection = `${relatedSection}\n\n${closedSection}`;
 
               // Replace or insert the related+closed section
