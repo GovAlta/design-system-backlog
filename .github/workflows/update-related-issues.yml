@@ -77,15 +77,17 @@ jobs:
                   }).join('\n')
                 : "_No closed issues._";
 
+              // Wrap both in comment tags so we can safely replace them
               const relatedSection = `### Open issues\n${openList}`;
               const closedSection = `#### Closed issues\n${closedList}`;
-              const combinedSection = `${relatedSection}\n\n${closedSection}`;
+              const combinedSection = `<!-- related-issues-start -->\n${relatedSection}\n\n${closedSection}\n<!-- related-issues-end -->`;
 
-              // Replace or insert the related+closed section
+              // Use regex to replace the entire block
               let updatedBody = communityIssue.body || "";
-              const sectionRegex = /### Open issues[\s\S]*?(?=### |$)/gi;
+              const sectionRegex = /<!-- related-issues-start -->[\s\S]*?<!-- related-issues-end -->/gi;
+
               if (sectionRegex.test(updatedBody)) {
-                updatedBody = updatedBody.replace(sectionRegex, `${relatedSection}\n\n${closedSection}`);
+                updatedBody = updatedBody.replace(sectionRegex, combinedSection);
               } else {
                 updatedBody += `\n\n${combinedSection}`;
               }
